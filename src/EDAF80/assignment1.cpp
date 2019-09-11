@@ -9,7 +9,7 @@
 
 #include <imgui.h>
 #include <external/imgui_impl_glfw_gl3.h>
-
+#include "CelestialBody.hpp"
 #include <stack>
 
 #include <cstdlib>
@@ -92,17 +92,19 @@ int main()
 	//
 	// Set up the sun node and other related attributes
 	//
-	Node sun_node;
-	sun_node.set_geometry(sphere);
-	sun_node.set_program(&celestial_body_shader, [](GLuint /*program*/){});
-	TRSTransformf& sun_transform_reference = sun_node.get_transform();
+	//Node sun_node;
+	//sun_node.set_geometry(sphere);
+	//sun_node.set_program(&celestial_body_shader, [](GLuint /*program*/){});
+	//TRSTransformf& sun_transform_reference = sun_node.get_transform();
 	GLuint const sun_texture = bonobo::loadTexture2D("sunmap.png");
-	sun_node.add_texture("diffuse_texture", sun_texture, GL_TEXTURE_2D);
+	//sun_node.add_texture("diffuse_texture", sun_texture, GL_TEXTURE_2D);
 	float const sun_spin_speed = glm::two_pi<float>() / 6.0f; // Full rotation in six seconds
 
-
+	CelestialBody sun_node = CelestialBody(sphere, &celestial_body_shader, sun_texture);
+	//sun_node.set_scale(glm::vec3(1, 0.2, 1));
+	sun_node.set_spinning(glm::vec3(0, 1, 0), glm::pi<float>(), 0);
 	Node solar_system_node;
-	solar_system_node.add_child(&sun_node);
+	//solar_system_node.add_child(&sun_node);
 
 
 	//
@@ -176,7 +178,7 @@ int main()
 		//
 		// Update the transforms
 		//
-		sun_transform_reference.RotateY(sun_spin_speed * delta_time);
+		//sun_transform_reference.RotateY(sun_spin_speed * delta_time);
 
 
 		//
@@ -186,8 +188,8 @@ int main()
 		std::stack<glm::mat4> matrix_stack({ glm::mat4(1.0f) });
 		// TODO: Replace this explicit rendering of the Sun with a
 		// traversal of the scene graph and rendering of all its nodes.
-		sun_node.render(camera.GetWorldToClipMatrix());
-
+		//sun_node.render(camera.GetWorldToClipMatrix());
+		sun_node.render(delta_time, camera.GetWorldToClipMatrix());
 
 		//
 		// Display Dear ImGui windows
