@@ -92,19 +92,51 @@ int main()
 	//
 	// Set up the sun node and other related attributes
 	//
-	//Node sun_node;
-	//sun_node.set_geometry(sphere);
-	//sun_node.set_program(&celestial_body_shader, [](GLuint /*program*/){});
-	//TRSTransformf& sun_transform_reference = sun_node.get_transform();
-	GLuint const sun_texture = bonobo::loadTexture2D("sunmap.png");
-	//sun_node.add_texture("diffuse_texture", sun_texture, GL_TEXTURE_2D);
-	float const sun_spin_speed = glm::two_pi<float>() / 6.0f; // Full rotation in six seconds
 
-	CelestialBody sun_node = CelestialBody(sphere, &celestial_body_shader, sun_texture);
+	Node sun_translate_node;
+
+	Node sun_node;
+	sun_node.set_geometry(sphere);
+	sun_node.set_program(&celestial_body_shader, [](GLuint /*program*/){});
+	TRSTransformf& sun_transform_reference = sun_node.get_transform();
+	GLuint const sun_texture = bonobo::loadTexture2D("sunmap.png");
+	sun_node.add_texture("diffuse_texture", sun_texture, GL_TEXTURE_2D);
+	float const sun_spin_speed = glm::two_pi<float>() / 6.0f; // Full rotation in six seconds
+	
+	//CelestialBody sun_node = CelestialBody(sphere, &celestial_body_shader, sun_texture);
 	//sun_node.set_scale(glm::vec3(1, 0.2, 1));
-	sun_node.set_spinning(glm::vec3(0, 1, 0), glm::pi<float>(), 0);
+	//sun_node.set_spinning(glm::vec3(1, 0, 0), glm::pi<float>(), 0);
+
+	Node earth_rotate_node;
+
+	Node earth_translate_node;
+	earth_translate_node.get_transform().SetTranslate(glm::vec3(2, 0, 0));
+
+	Node earth_node;
+	earth_node.set_geometry(sphere);
+	earth_node.set_program(&celestial_body_shader, [](GLuint /*program*/) {});
+	GLuint const earth_texture = bonobo::loadTexture2D("earthmap.png");
+	earth_node.add_texture("diffuse_texture", earth_texture, GL_TEXTURE_2D);
+	earth_node.get_transform().SetScale(glm::vec3(0.25, 0.25, 0.25));
+
+	Node moon_node;
+	moon_node.set_geometry(sphere);
+	moon_node.set_program(&celestial_body_shader, [](GLuint /*program*/) {});
+	GLuint const moon_texture = bonobo::loadTexture2D("moonmap.png");
+	moon_node.add_texture("diffuse_texture", moon_texture, GL_TEXTURE_2D);
+	moon_node.get_transform().SetTranslate(glm::vec3(3.5, 0, 0));
+	moon_node.get_transform().SetScale(glm::vec3(0.25, 0.25, 0.25));
+
+
 	Node solar_system_node;
-	//solar_system_node.add_child(&sun_node);
+	earth_rotate_node.add_child(&earth_translate_node);
+	earth_translate_node.add_child(&earth_node);
+	earth_translate_node.add_child(&moon_node);
+	sun_translate_node.add_child(&earth_rotate_node);
+	sun_translate_node.add_child(&sun_node);
+	solar_system_node.add_child(&sun_translate_node);
+
+	
 
 
 	//
@@ -132,7 +164,8 @@ int main()
 
 	bool show_logs = true;
 	bool show_gui = true;
-
+	bool printed = false;
+	sun_translate_node.get_transform().SetTranslate(glm::vec3(2, 0, 0));
 	while (!glfwWindowShouldClose(window)) {
 		//
 		// Compute timings information
@@ -178,7 +211,7 @@ int main()
 		//
 		// Update the transforms
 		//
-		//sun_transform_reference.RotateY(sun_spin_speed * delta_time);
+		sun_transform_reference.RotateY(sun_spin_speed * delta_time);
 
 
 		//
@@ -188,9 +221,24 @@ int main()
 		std::stack<glm::mat4> matrix_stack({ glm::mat4(1.0f) });
 		// TODO: Replace this explicit rendering of the Sun with a
 		// traversal of the scene graph and rendering of all its nodes.
+		while (!node_stack.empty()) {
+			const Node* n = node_stack.top();
+			glm::mat4 world_transform = matrix_stack.top();
+			glm::mat4 transform = world_transform * n->get_transform().GetMatrix();
+			if (!printed) {
+				std::cout << transform << std::endl;
+			}
+			node_stack.pop();
+			matrix_stack.pop();
+			n->render(camera.GetWorldToClipMatrix(), world_transform);
+			for (size_t i = 0; i < n->get_children_nb(); ++i) {
+				node_stack.push(n->get_child(i));
+				matrix_stack.push(transform);
+			}
+		}
+		printed = true;
 		//sun_node.render(camera.GetWorldToClipMatrix());
-		sun_node.render(delta_time, camera.GetWorldToClipMatrix());
-
+		
 		//
 		// Display Dear ImGui windows
 		//
@@ -207,6 +255,8 @@ int main()
 	}
 
 	glDeleteTextures(1, &sun_texture);
+	glDeleteTextures(1, &earth_texture);
+	glDeleteTextures(1, &moon_texture);
 
 	return EXIT_SUCCESS;
 }

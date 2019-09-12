@@ -18,7 +18,7 @@ void CelestialBody::render(float ellapsed_time, glm::mat4 const& view_projection
 	glm::mat4 scale_transform = glm::scale(glm::mat4(1.0f), _scale);
 	glm::mat4 rot_transform = glm::rotate(glm::mat4(1.f), _spin_angle, _spinning_axis);
 
-	glm::mat4 transform = scale_transform * rot_transform;
+	glm::mat4 transform =  rot_transform * scale_transform;
 
 	_node.render(view_projection, transform);
 
