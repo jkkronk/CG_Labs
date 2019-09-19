@@ -110,28 +110,34 @@ int main()
 	Node earth_rotate_node;
 
 	Node earth_translate_node;
-	earth_translate_node.get_transform().SetTranslate(glm::vec3(2, 0, 0));
+	earth_translate_node.get_transform().SetTranslate(glm::vec3(4, 0, 0));
 
 	Node earth_node;
 	earth_node.set_geometry(sphere);
 	earth_node.set_program(&celestial_body_shader, [](GLuint /*program*/) {});
 	GLuint const earth_texture = bonobo::loadTexture2D("earthmap.png");
 	earth_node.add_texture("diffuse_texture", earth_texture, GL_TEXTURE_2D);
-	earth_node.get_transform().SetScale(glm::vec3(0.25, 0.25, 0.25));
+	earth_node.get_transform().SetScale(glm::vec3(0.05, 0.05, 0.05));
+	float const earth_axis_spin_speed = glm::two_pi<float>() / 20.0f; // Full rotation in six seconds
+	float const earth_spin_speed = glm::two_pi<float>() / 3.0f; // Full rotation in six seconds
+
+	Node moon_rotate_node;
 
 	Node moon_node;
 	moon_node.set_geometry(sphere);
 	moon_node.set_program(&celestial_body_shader, [](GLuint /*program*/) {});
 	GLuint const moon_texture = bonobo::loadTexture2D("moonmap.png");
 	moon_node.add_texture("diffuse_texture", moon_texture, GL_TEXTURE_2D);
-	moon_node.get_transform().SetTranslate(glm::vec3(3.5, 0, 0));
-	moon_node.get_transform().SetScale(glm::vec3(0.25, 0.25, 0.25));
-
+	moon_node.get_transform().SetTranslate(glm::vec3(0.2, 0, 0));
+	moon_node.get_transform().SetScale(glm::vec3(0.01, 0.01, 0.01));
+	float const moon_axis_spin_speed = glm::two_pi<float>() / 1.3f; // Full rotation in six seconds
+	float const moon_spin_speed = glm::two_pi<float>() / 90.0f; // Full rotation in six seconds
 
 	Node solar_system_node;
 	earth_rotate_node.add_child(&earth_translate_node);
 	earth_translate_node.add_child(&earth_node);
-	earth_translate_node.add_child(&moon_node);
+	earth_translate_node.add_child(&moon_rotate_node);
+	moon_rotate_node.add_child(&moon_node);
 	sun_translate_node.add_child(&earth_rotate_node);
 	sun_translate_node.add_child(&sun_node);
 	solar_system_node.add_child(&sun_translate_node);
@@ -165,7 +171,7 @@ int main()
 	bool show_logs = true;
 	bool show_gui = true;
 	bool printed = false;
-	sun_translate_node.get_transform().SetTranslate(glm::vec3(2, 0, 0));
+
 	while (!glfwWindowShouldClose(window)) {
 		//
 		// Compute timings information
@@ -212,6 +218,11 @@ int main()
 		// Update the transforms
 		//
 		sun_transform_reference.RotateY(sun_spin_speed * delta_time);
+		earth_rotate_node.get_transform().RotateY(earth_axis_spin_speed * delta_time);
+		earth_node.get_transform().RotateY(earth_spin_speed * delta_time);
+		moon_rotate_node.get_transform().RotateY(moon_axis_spin_speed * delta_time);
+		moon_node.get_transform().RotateY(moon_spin_speed * delta_time);
+
 
 
 		//
