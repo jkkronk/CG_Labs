@@ -36,7 +36,8 @@ void
 edaf80::Assignment2::run()
 {
 	// Load the sphere geometry
-	auto const shape = parametric_shapes::createSphere(20.0f,20.0f,3.0f);
+	//auto const shape = parametric_shapes::createTorus(20.0f,20.0f, 0.5f, 0.2f);
+	auto const shape = parametric_shapes::createSphere(20.0f,20.0f,2.0f);
 	if (shape.vao == 0u)
 		return;
 
@@ -104,7 +105,7 @@ edaf80::Assignment2::run()
 
 	// Set the default tensions value; it can always be changed at runtime
 	// through the "Scene Controls" window.
-	float catmull_rom_tension = 0.0f;
+	float catmull_rom_tension = 0.5f;
 
 	// Set whether the default interpolation algorithm should be the linear one;
 	// it can always be changed at runtime through the "Scene Controls" window.
@@ -113,7 +114,13 @@ edaf80::Assignment2::run()
 	// Set whether to interpolate the position of an object or not; it can
 	// always be changed at runtime through the "Scene Controls" window.
 	bool interpolate = true;
-
+	float x = 0.0f;
+	/*glm::vec3 interpts[10] = { glm::vec3(-2.0,0.0,0.0),glm::vec3(-2.0,0.0,2.0),glm::vec3(2.0,0.0,0.0),
+		glm::vec3(2.0,1.0,1.5),glm::vec3(2.0,2.0,0.0),glm::vec3(-1.0,1.0,-1.5),glm::vec3(-2.0,0.0,-1.5)
+		,glm::vec3(-2.0,2.0,0.0),glm::vec3(-2.0,2.0,2.5) ,glm::vec3(-2.0,0.0,0.0) };
+		*/
+	glm::vec3 interpts[4] = { glm::vec3(0.0,0.0,0.0),glm::vec3(2.0,0.0,0.0),
+		glm::vec3(2.0,2.0,0.0) ,glm::vec3(0.0,2.0,0.0) };
 	auto circle_rings = Node();
 	circle_rings.set_geometry(shape);
 	circle_rings.set_program(&fallback_shader, set_uniforms);
@@ -172,14 +179,31 @@ edaf80::Assignment2::run()
 			//! \todo Interpolate the movement of a shape between various
 			//!        control points.
 			if (use_linear) {
-				//! \todo Compute the interpolated position
-				//!       using the linear interpolation.
+				int idx = static_cast<int>(x);
+				int size = sizeof(interpts) / sizeof(glm::vec3);
+				glm::vec3 translation = interpolation::evalLERP(interpts[idx], interpts[(idx+1)%size], x - idx);
+				std::cout << translation << std::endl;
+				x += ddeltatime;
+				if (x > size) {
+					x -= size;
+				}
+				circle_rings_transform_ref.SetTranslate(translation);
 			}
 			else {
 				//! \todo Compute the interpolated position
 				//!       using the Catmull-Rom interpolation;
 				//!       use the `catmull_rom_tension`
 				//!       variable as your tension argument.
+				int idx = static_cast<int>(x);
+				int size = sizeof(interpts) / sizeof(glm::vec3);
+
+				glm::vec3 translation = interpolation::evalCatmullRom(interpts[idx], interpts[(idx + 1)%size], interpts[(idx + 2)%size], interpts[(idx + 3)%size], catmull_rom_tension, x - idx);
+				std::cout << translation << std::endl;
+				x += ddeltatime;
+				if (x > size) {
+					x -= size;
+				}
+				circle_rings_transform_ref.SetTranslate(translation);
 			}
 		}
 
