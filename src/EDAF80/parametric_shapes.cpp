@@ -151,12 +151,12 @@ parametric_shapes::createSphere(unsigned int const res_theta,
 				0.0f);
 			*/
 			// tangent
-			auto t = glm::vec3(radius * cos_theta * sin_phi, 0.0f, - radius * sin_phi * sin_theta);
-			t = glm::normalize(t);
+			auto t = glm::vec3(cos_theta , 0.0f, -sin_theta);
+			t = glm::normalize(t); 
 			//tangents[index] = t;
 
 			// binormal
-			auto b = glm::vec3(radius * cos_phi * sin_theta, radius * sin_phi, radius * cos_theta * cos_phi);
+			auto b = glm::vec3(cos_phi * sin_theta, sin_phi, cos_theta * cos_phi);
 			b = glm::normalize(b);
 			//binormals[index] = b;
 

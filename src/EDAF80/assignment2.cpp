@@ -37,7 +37,7 @@ edaf80::Assignment2::run()
 {
 	// Load the sphere geometry
 	//auto const shape = parametric_shapes::createTorus(20.0f,20.0f, 0.5f, 0.2f);
-	auto const shape = parametric_shapes::createSphere(20.0f,20.0f,2.0f);
+	auto const shape = parametric_shapes::createSphere(20.0f,20.0f,0.5f);
 	if (shape.vao == 0u)
 		return;
 
@@ -115,12 +115,14 @@ edaf80::Assignment2::run()
 	// always be changed at runtime through the "Scene Controls" window.
 	bool interpolate = true;
 	float x = 0.0f;
-	/*glm::vec3 interpts[10] = { glm::vec3(-2.0,0.0,0.0),glm::vec3(-2.0,0.0,2.0),glm::vec3(2.0,0.0,0.0),
+	glm::vec3 interpts[10] = { glm::vec3(-2.0,0.0,0.0),glm::vec3(-2.0,0.0,2.0),glm::vec3(2.0,0.0,0.0),
 		glm::vec3(2.0,1.0,1.5),glm::vec3(2.0,2.0,0.0),glm::vec3(-1.0,1.0,-1.5),glm::vec3(-2.0,0.0,-1.5)
 		,glm::vec3(-2.0,2.0,0.0),glm::vec3(-2.0,2.0,2.5) ,glm::vec3(-2.0,0.0,0.0) };
-		*/
+	/*
 	glm::vec3 interpts[4] = { glm::vec3(0.0,0.0,0.0),glm::vec3(2.0,0.0,0.0),
 		glm::vec3(2.0,2.0,0.0) ,glm::vec3(0.0,2.0,0.0) };
+		*/
+
 	auto circle_rings = Node();
 	circle_rings.set_geometry(shape);
 	circle_rings.set_program(&fallback_shader, set_uniforms);

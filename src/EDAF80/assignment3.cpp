@@ -37,12 +37,11 @@ void
 edaf80::Assignment3::run()
 {
 	// Load the sphere geometry
-	auto circle_ring_shape = parametric_shapes::createCircleRing(4u, 60u, 1.0f, 2.0f);
+	auto circle_ring_shape = parametric_shapes::createSphere(30.0f, 30.0f, 2.0f);
 	if (circle_ring_shape.vao == 0u) {
 		LogError("Failed to retrieve the circle ring mesh");
 		return;
 	}
-
 	// Set up the camera
 	mCamera.mWorld.SetTranslate(glm::vec3(0.0f, 0.0f, 6.0f));
 	mCamera.mMouseSensitivity = 0.003f;
@@ -84,6 +83,14 @@ edaf80::Assignment3::run()
 	if (texcoord_shader == 0u)
 		LogError("Failed to load texcoord shader");
 
+	GLuint phong_shader = 0u;
+	program_manager.CreateAndRegisterProgram("Phong",
+		{ { ShaderType::vertex, "EDAF80/phong.vert" },
+		  { ShaderType::fragment, "EDAF80/phong.frag" } },
+		phong_shader);
+	if (phong_shader == 0u)
+		LogError("Failed to load phong shader");
+
 	auto light_position = glm::vec3(-2.0f, 4.0f, 2.0f);
 	auto const set_uniforms = [&light_position](GLuint program){
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
@@ -105,7 +112,12 @@ edaf80::Assignment3::run()
 
 	auto circle_ring = Node();
 	circle_ring.set_geometry(circle_ring_shape);
-	circle_ring.set_program(&fallback_shader, set_uniforms);
+	circle_ring.set_program(&fallback_shader, phong_set_uniforms);
+
+	auto my_cube_map_id = bonobo::loadTextureCubeMap("sunset_sky/posx.png", "sunset_sky/negx.png",
+		"sunset_sky/posy.png", "sunset_sky/negy.png",
+		"sunset_sky/posz.png", "sunset_sky/negz.png", true);
+	//circle_ring.add_texture("")
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -176,7 +188,7 @@ edaf80::Assignment3::run()
 			bonobo::uiSelectPolygonMode("Polygon mode", polygon_mode);
 			auto circle_ring_selection_result = program_manager.SelectProgram("Circle ring", circle_ring_program_index);
 			if (circle_ring_selection_result.was_selection_changed) {
-				circle_ring.set_program(circle_ring_selection_result.program, set_uniforms);
+				circle_ring.set_program(circle_ring_selection_result.program, phong_set_uniforms);
 			}
 			ImGui::Separator();
 			ImGui::ColorEdit3("Ambient", glm::value_ptr(ambient));
