@@ -343,7 +343,7 @@ bonobo::loadTextureCubeMap(std::string const& posx, std::string const& negx,
 	             /* the type of each component */GL_UNSIGNED_BYTE,
 	             /* the pointer to the actual data on the CPU */reinterpret_cast<GLvoid const*>(data.data()));
 
-	auto data = getTextureData("cubemaps/" + posx, width, height, false);
+	data = getTextureData("cubemaps/" + posx, width, height, false);
 	if (data.empty()) {
 		glDeleteTextures(1, &texture);
 		return 0u;
@@ -358,7 +358,7 @@ bonobo::loadTextureCubeMap(std::string const& posx, std::string const& negx,
 		/* the type of each component */GL_UNSIGNED_BYTE,
 		/* the pointer to the actual data on the CPU */reinterpret_cast<GLvoid const*>(data.data()));
 
-	auto data = getTextureData("cubemaps/" + negy, width, height, false);
+	data = getTextureData("cubemaps/" + negy, width, height, false);
 	if (data.empty()) {
 		glDeleteTextures(1, &texture);
 		return 0u;
@@ -374,7 +374,7 @@ bonobo::loadTextureCubeMap(std::string const& posx, std::string const& negx,
 		/* the type of each component */GL_UNSIGNED_BYTE,
 		/* the pointer to the actual data on the CPU */reinterpret_cast<GLvoid const*>(data.data()));
 
-	auto data = getTextureData("cubemaps/" + posy, width, height, false);
+	data = getTextureData("cubemaps/" + posy, width, height, false);
 	if (data.empty()) {
 		glDeleteTextures(1, &texture);
 		return 0u;
@@ -389,7 +389,7 @@ bonobo::loadTextureCubeMap(std::string const& posx, std::string const& negx,
 		/* the type of each component */GL_UNSIGNED_BYTE,
 		/* the pointer to the actual data on the CPU */reinterpret_cast<GLvoid const*>(data.data()));
 
-	auto data = getTextureData("cubemaps/" + negz, width, height, false);
+	data = getTextureData("cubemaps/" + negz, width, height, false);
 	if (data.empty()) {
 		glDeleteTextures(1, &texture);
 		return 0u;
@@ -404,7 +404,7 @@ bonobo::loadTextureCubeMap(std::string const& posx, std::string const& negx,
 		/* the type of each component */GL_UNSIGNED_BYTE,
 		/* the pointer to the actual data on the CPU */reinterpret_cast<GLvoid const*>(data.data()));
 
-	auto data = getTextureData("cubemaps/" + posz, width, height, false);
+	data = getTextureData("cubemaps/" + posz, width, height, false);
 	if (data.empty()) {
 		glDeleteTextures(1, &texture);
 		return 0u;

@@ -18,11 +18,10 @@ out vec4 frag_color;
 void main()
 {
 	vec3 L = normalize(light_position - fs_in.vertex);
-	
 	vec3 V = normalize(camera_position - fs_in.vertex);
 
-	vec4 diffuse = vec4(diffuse, 1.0) * dot(normalize(fs_in.normal), L);
-	vec4 specular =  vec4(specular, 1.0) * pow(dot(reflect(-L,normalize(fs_in.normal)),V),shininess) ;
+	vec4 diffuse = vec4(diffuse, 1.0) * max(dot(normalize(fs_in.normal), L),0.0f);
+	vec4 specular =  vec4(specular, 1.0) * max(pow(dot(reflect(-L,normalize(fs_in.normal)),V),shininess),0) ;
 
-	frag_color = clamp(vec4(ambient, 1.0) + diffuse + specular, 0.0, 1.0);// + specular; 
+	frag_color = vec4(ambient, 1.0) + diffuse + specular;// + specular; 
 }

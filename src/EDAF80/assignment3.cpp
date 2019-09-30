@@ -91,6 +91,21 @@ edaf80::Assignment3::run()
 	if (phong_shader == 0u)
 		LogError("Failed to load phong shader");
 
+	GLuint cube_map_shader = 0u;
+	program_manager.CreateAndRegisterProgram("Cube mao",
+		{ { ShaderType::vertex, "EDAF80/cube_map.vert" },
+		  { ShaderType::fragment, "EDAF80/cube_map.frag" } },
+		cube_map_shader);
+	if (cube_map_shader == 0u)
+		LogError("Failed to load phong shader");
+	GLuint normal_map_shader = 0u;
+	program_manager.CreateAndRegisterProgram("Normal map",
+		{ { ShaderType::vertex, "EDAF80/normal_map.vert" },
+		  { ShaderType::fragment, "EDAF80/normal_map.frag" } },
+		normal_map_shader);
+	if (normal_map_shader == 0u)
+		LogError("Failed to load phong shader");
+
 	auto light_position = glm::vec3(-2.0f, 4.0f, 2.0f);
 	auto const set_uniforms = [&light_position](GLuint program){
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
@@ -117,8 +132,12 @@ edaf80::Assignment3::run()
 	auto my_cube_map_id = bonobo::loadTextureCubeMap("sunset_sky/posx.png", "sunset_sky/negx.png",
 		"sunset_sky/posy.png", "sunset_sky/negy.png",
 		"sunset_sky/posz.png", "sunset_sky/negz.png", true);
-	//circle_ring.add_texture("")
+	circle_ring.add_texture("cube_map", my_cube_map_id, GL_TEXTURE_CUBE_MAP);
 
+	auto my_normal_map_id = bonobo::loadTexture2D("earth_bump.png");
+	circle_ring.add_texture("normal_map", my_normal_map_id, GL_TEXTURE_2D);
+	auto my_diffuse_map_id = bonobo::loadTexture2D("earth_diffuse.png");
+	circle_ring.add_texture("diffuse_map", my_diffuse_map_id, GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 
 	// Enable face culling to improve performance:
