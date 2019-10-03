@@ -37,7 +37,7 @@ edaf80::Assignment2::run()
 {
 	// Load the sphere geometry
 	//auto const shape = parametric_shapes::createTorus(20.0f,20.0f, 0.5f, 0.2f);
-	auto const shape = parametric_shapes::createSphere(20.0f,20.0f,0.5f);
+	auto const shape = parametric_shapes::createQuad(5,5,5,5);
 	if (shape.vao == 0u)
 		return;
 
@@ -184,7 +184,6 @@ edaf80::Assignment2::run()
 				int idx = static_cast<int>(x);
 				int size = sizeof(interpts) / sizeof(glm::vec3);
 				glm::vec3 translation = interpolation::evalLERP(interpts[idx], interpts[(idx+1)%size], x - idx);
-				std::cout << translation << std::endl;
 				x += ddeltatime;
 				if (x > size) {
 					x -= size;
@@ -200,7 +199,6 @@ edaf80::Assignment2::run()
 				int size = sizeof(interpts) / sizeof(glm::vec3);
 
 				glm::vec3 translation = interpolation::evalCatmullRom(interpts[idx], interpts[(idx + 1)%size], interpts[(idx + 2)%size], interpts[(idx + 3)%size], catmull_rom_tension, x - idx);
-				std::cout << translation << std::endl;
 				x += ddeltatime;
 				if (x > size) {
 					x -= size;

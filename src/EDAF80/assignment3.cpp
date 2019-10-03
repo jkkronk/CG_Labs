@@ -115,7 +115,7 @@ edaf80::Assignment3::run()
 	auto ambient = glm::vec3(0.2f, 0.2f, 0.2f);
 	auto diffuse = glm::vec3(0.7f, 0.2f, 0.4f);
 	auto specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	auto shininess = 1.0f;
+	auto shininess = 2.0f;
 	auto const phong_set_uniforms = [&light_position,&camera_position,&ambient,&diffuse,&specular,&shininess](GLuint program){
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));

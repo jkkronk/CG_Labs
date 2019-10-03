@@ -32,9 +32,9 @@ void main()
 	
 	vec3 V = normalize(camera_position - fs_in.vertex);
 
-	vec4 diffuse = texture(diffuse_map, fs_in.texcoord) * max(dot(normal, L),0.0f);
-	vec4 specular =  vec4(specular, 1.0) * max(pow(dot(reflect(-L,normal),V),shininess),0);
+	vec3 diffuse = texture(diffuse_map, fs_in.texcoord).rgb * max(dot(normal, L),0.0f);
+	vec3 specular =  specular * pow(max(dot(reflect(-L,normal),V),0),shininess);
 
 
-	frag_color = vec4(ambient, 1.0) + diffuse + specular;
+	frag_color = vec4(ambient + diffuse + specular, 1.0);
 }

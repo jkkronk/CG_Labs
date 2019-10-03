@@ -21,7 +21,7 @@ void main()
 	vec3 V = normalize(camera_position - fs_in.vertex);
 
 	vec4 diffuse = vec4(diffuse, 1.0) * max(dot(normalize(fs_in.normal), L),0.0f);
-	vec4 specular =  vec4(specular, 1.0) * max(pow(dot(reflect(-L,normalize(fs_in.normal)),V),shininess),0) ;
+	vec4 specular =  vec4(specular, 1.0) * pow( max(dot(reflect(-L,normalize(fs_in.normal)),V),0),shininess) ;
 
 	frag_color = vec4(ambient, 1.0) + diffuse + specular;// + specular; 
 }

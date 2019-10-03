@@ -12,6 +12,9 @@
 #include <tinyfiledialogs.h>
 
 #include <stdexcept>
+#include "parametric_shapes.hpp"
+#include "../core/node.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 edaf80::Assignment4::Assignment4(WindowManager& windowManager) :
 	mCamera(0.5f * glm::half_pi<float>(),
@@ -31,16 +34,18 @@ void
 edaf80::Assignment4::run()
 {
 	// Set up the camera
-	mCamera.mWorld.SetTranslate(glm::vec3(0.0f, 0.0f, 6.0f));
+	mCamera.mWorld.SetTranslate(glm::vec3(2.5f, 4.0f, 6.0f));
 	mCamera.mMouseSensitivity = 0.003f;
 	mCamera.mMovementSpeed = 0.025;
+	
+	
 
 	// Create the shader programs
 	ShaderProgramManager program_manager;
 	GLuint fallback_shader = 0u;
 	program_manager.CreateAndRegisterProgram("Fallback",
-	                                         { { ShaderType::vertex, "EDAF80/fallback.vert" },
-	                                           { ShaderType::fragment, "EDAF80/fallback.frag" } },
+	                                         { { ShaderType::vertex, "EDAF80/water.vert" },
+	                                           { ShaderType::fragment, "EDAF80/water.frag" } },
 	                                         fallback_shader);
 	if (fallback_shader == 0u) {
 		LogError("Failed to load fallback shader");
@@ -55,6 +60,18 @@ edaf80::Assignment4::run()
 	//
 	// Todo: Load your geometry
 	//
+	float time = 0.0f;
+	auto const phong_set_uniforms = [&time](GLuint program) {
+		glUniform1f(glGetUniformLocation(program, "time"), time);
+		
+	};
+
+	auto plane = parametric_shapes::createQuad(5, 5, 50, 50);
+
+	auto water = Node();
+	water.set_geometry(plane);
+	water.get_transform().SetRotateX(glm::pi<float>()/2.0f);
+	water.set_program(&fallback_shader, [](GLuint /*program*/) {});
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -117,9 +134,7 @@ edaf80::Assignment4::run()
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		if (!shader_reload_failed) {
-			//
-			// Todo: Render all your geometry here.
-			//
+			water.render(mCamera.GetWorldToClipMatrix());
 		}
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
