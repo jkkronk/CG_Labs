@@ -12,6 +12,7 @@ namespace parametric_shapes
 	//! @return wrapper around OpenGL objects' name containing the geometry
 	//!         data
 	bonobo::mesh_data createQuad(unsigned int width, unsigned int height,unsigned int res_height = 1,unsigned int res_width = 1);
+	bonobo::mesh_data createQuadXZ(unsigned int size, unsigned int res);
 
 	//! \brief Create a sphere for some tesselation level and make it
 	//!        available to OpenGL.
