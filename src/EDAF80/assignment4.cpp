@@ -1,5 +1,4 @@
 #include "assignment4.hpp"
-#include <unistd.h>
 #include "config.hpp"
 #include "core/Bonobo.h"
 #include "core/FPSCamera.h"
@@ -121,7 +120,7 @@ edaf80::Assignment4::run()
 	glEnable(GL_DEPTH_TEST);
 
 	// Enable face culling to improve performance:
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
 	//glCullFace(GL_BACK);
 
@@ -181,7 +180,7 @@ edaf80::Assignment4::run()
 
 		if (!shader_reload_failed) {
 			water.render(mCamera.GetWorldToClipMatrix());
-			//skybox.render(mCamera.GetWorldToClipMatrix());
+			skybox.render(mCamera.GetWorldToClipMatrix());
 		}
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -231,7 +230,6 @@ edaf80::Assignment4::run()
 			Log::View::Render();
 		if (show_gui)
 			ImGui::Render();
-		usleep(1);
 		glfwSwapBuffers(window);
 		lastTime = nowTime;
 	}
