@@ -1,4 +1,6 @@
 #include "assignment5.hpp"
+#include "interpolation.hpp"
+#include "parametric_shapes.hpp"
 
 #include "config.hpp"
 #include "core/Bonobo.h"
@@ -12,10 +14,19 @@
 #include <tinyfiledialogs.h>
 #include <array>
 #include <stdexcept>
-#include "parametric_shapes.hpp"
 #include "../core/node.hpp"
-#include <glm/gtc/type_ptr.hpp>
 #include <string>
+#include <stack>
+#include <iostream>
+#include <ctime>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+
+
+
 
 edaf80::Assignment5::Assignment5(WindowManager& windowManager) :
 	mCamera(0.5f* glm::half_pi<float>(),
@@ -75,6 +86,13 @@ edaf80::Assignment5::run()
 		LogError("Failed to load cube map");
 		return;
 	}
+	GLuint phong_shader = 0u;
+	program_manager.CreateAndRegisterProgram("Phong",
+		{ { ShaderType::vertex, "EDAF80/phong.vert" },
+		  { ShaderType::fragment, "EDAF80/phong.frag" } },
+		phong_shader);
+	if (phong_shader == 0u)
+		LogError("Failed to load phong shader");
 
 	//
 	// Todo: Load your geometry
@@ -110,22 +128,98 @@ edaf80::Assignment5::run()
 		"sea_sky/posy.jpg", "sea_sky/negy.jpg",
 		"sea_sky/negz.jpg", "sea_sky/posz.jpg", true);
 	auto water_normal_id = bonobo::loadTexture2D("waves.png");
-	auto sphere = parametric_shapes::createSphere(75, 75, 75);
-	auto plane = parametric_shapes::createQuadXZ(150, 150);
+	auto sphere_sky = parametric_shapes::createSphere(400, 400, 400);
+	auto plane = parametric_shapes::createQuadXZ(800, 800);
 	auto water = Node();
 	water.set_geometry(plane);
 	water.set_program(&water_shader, water_set_uniforms);
-	water.get_transform().SetTranslate(glm::vec3(-75.0f, -10.0f, -75.0f));
+	water.get_transform().SetTranslate(glm::vec3(-400.0f, -10.0f, -400.0f));
 	water.add_texture("skybox", skybox_id, GL_TEXTURE_CUBE_MAP);
 	water.add_texture("normal_map", water_normal_id, GL_TEXTURE_2D);
 
 	// Sky
 	auto skybox = Node();
-	skybox.set_geometry(sphere);
+	skybox.set_geometry(sphere_sky);
 	skybox.set_program(&skybox_shader, [](GLuint /*program*/) {});
 	skybox.add_texture("skybox", skybox_id, GL_TEXTURE_CUBE_MAP);
 
+	//Path
+	float catmull_rom_tension = 0.8f;
+	
+	glm::vec3 interpts[7] = {
+								glm::vec3(0.0f,0.0f,0.0f),
+								glm::vec3(0.0f,0.0f,0.0f),
+								glm::vec3(0.0f,0.0f,0.0f),
+								glm::vec3(0.0f,0.0f,0.0f),
+								glm::vec3(0.0f,0.0f,0.0f),
+								glm::vec3(0.0f,0.0f,0.0f),
+								glm::vec3(0.0f,0.0f,0.0f)
+	};
+	
+	int x_next = 0.0f;
+	int y_next = 0.0f;
+	int z_next = -40.0f;
 
+	for (int i = 0; i < (sizeof(interpts) / sizeof(glm::vec3)); i++) {
+		interpts[i] = glm::vec3(x_next, y_next, z_next);
+
+		x_next += -75 + (std::rand() % (150 + 75 + 1));
+		y_next += -25 + (std::rand() % (50 + 25 + 1));
+		z_next += -75 + (std::rand() % (150 + 75 + 1));
+
+		if (y_next < 5) {
+			y_next = 5.0f;
+		}
+	}
+	
+	// Balloons
+	auto light_position = glm::vec3(-2.0f, 4.0f, 2.0f);
+	auto const set_uniforms = [&light_position](GLuint program) {
+		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
+	};
+
+	auto ambient = glm::vec3(0.95f, 0.1f, 0.1f);
+	auto diffuse = glm::vec3(1.0f, 0.2f, 0.2f);
+	auto specular = glm::vec3(1.0f, 1.0f, 1.0f);
+	auto shininess = 1.1f;
+	auto const phong_set_uniforms = [&light_position, &camera_position, &ambient, &diffuse, &specular, &shininess](GLuint program) {
+		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
+		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+		glUniform3fv(glGetUniformLocation(program, "ambient"), 1, glm::value_ptr(ambient));
+		glUniform3fv(glGetUniformLocation(program, "diffuse"), 1, glm::value_ptr(diffuse));
+		glUniform3fv(glGetUniformLocation(program, "specular"), 1, glm::value_ptr(specular));
+		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
+	};
+
+	auto sphere_balloon = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f, 0.5f);
+
+	int const balloons_per_part = 4;
+	int const nbr_balloons = balloons_per_part * (sizeof(interpts) / sizeof(glm::vec3)-2);
+	std::vector<Node> balloons(nbr_balloons);
+
+	for (int i = 0; i < nbr_balloons; i++) {
+		balloons[i].set_geometry(sphere_balloon);
+		balloons[i].set_program(&phong_shader, phong_set_uniforms);
+		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+		balloons[i].get_transform().RotateY(r*3);
+	}
+
+	float x = 0.0f;
+
+	for (int i = 0; i < nbr_balloons; i++) {
+
+		int idx = static_cast<int>(x);
+		int size = sizeof(interpts) / sizeof(glm::vec3);
+
+		glm::vec3 translation = interpolation::evalCatmullRom(interpts[idx], interpts[(idx) % size], interpts[(idx + 1) % size], interpts[(idx + 2) % size], catmull_rom_tension, x - idx);
+		x += (float)1/ (float)balloons_per_part;
+
+		//std::cout << translation << balloons_per_part << x << nbr_balloons << std::endl;
+		
+		balloons[i].get_transform().SetTranslate(translation);
+	}
+	
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -175,7 +269,11 @@ edaf80::Assignment5::run()
 		}
 
 		ImGui_ImplGlfwGL3_NewFrame();
-
+		
+		for (int i = 0; i < nbr_balloons; i++) {
+			balloons[i].get_transform().RotateY(0.01f);
+		}
+		
 		//
 		// Todo: If you need to handle inputs, you can do it here
 		//
@@ -191,9 +289,15 @@ edaf80::Assignment5::run()
 		if (!shader_reload_failed) {
 			water.render(mCamera.GetWorldToClipMatrix());
 			skybox.render(mCamera.GetWorldToClipMatrix());
+
+			for (int i = 0; i < nbr_balloons; i++) {
+				balloons[i].render(mCamera.GetWorldToClipMatrix());
+			}
+
 		}
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 
 		//
 		// Todo: If you want a custom ImGUI window, you can set it up

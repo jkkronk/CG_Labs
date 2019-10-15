@@ -259,11 +259,9 @@ parametric_shapes::createSphere(unsigned int const res_theta,
 			// normal
 			auto const n = glm::cross(t, b);
 			normals[index] = n;
-			std::cout << phi << std::endl;
 			phi += dphi;
 			++index;
 		}
-		std::cout << "theta" <<  theta << std::endl;
 		theta += dtheta;
 	}
 
