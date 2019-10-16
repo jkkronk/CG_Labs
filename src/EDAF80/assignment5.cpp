@@ -173,7 +173,7 @@ edaf80::Assignment5::run()
 	int y_next = 0.0f;
 	int z_next = -40.0f;
 
-	for (int i = 0; i < (sizeof(interpts) / sizeof(glm::vec3)); i++) {
+	for (int i = 0; i < (sizeof(interpts) / sizeof(glm::vec3)-1); i++) {
 		interpts[i] = glm::vec3(x_next, y_next, z_next);
 
 		x_next += -75 + (std::rand() % (150 + 75 + 1));
@@ -195,7 +195,7 @@ edaf80::Assignment5::run()
 	auto ambient = glm::vec3(0.95f, 0.1f, 0.1f);
 	auto diffuse = glm::vec3(1.0f, 0.2f, 0.2f);
 	auto specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	auto shininess = 0.5f;
+	auto shininess = 0.99f;
 	
 	auto const phong_set_uniforms = [&light_position, &camera_position, &ambient, &diffuse, &specular, &shininess](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
@@ -210,7 +210,7 @@ edaf80::Assignment5::run()
 	auto shape_torus = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f , 0.5f);
 	int const inner_radii = 0.5f;
 	int const torus_per_part = 3;
-	int const nbr_torus = torus_per_part * (sizeof(interpts) / sizeof(glm::vec3)-2);
+	int const nbr_torus = torus_per_part * (sizeof(interpts) / sizeof(glm::vec3)-1);
 	std::vector<Node> torus_rings(nbr_torus);
 
 	for (int i = 0; i < nbr_torus; i++) {
@@ -319,10 +319,14 @@ edaf80::Assignment5::run()
 			if (next_node > nbr_torus - 1) {
 				next_node = 0;
 			}
-			std::cout << next_node;
+			std::cout << next_node << std:endl;
 			torus_rings[next_node].set_program(&phong_shader, phong_set_uniforms_green);
-			
 		}
+
+		/*
+		if (camera_position[1] < -8) {
+			mCamera.mWorld.Translate( glm::vec3(camera_position[0], -8, camera_position[2]));
+		}*/
 
 		//
 		// Todo: If you need to handle inputs, you can do it here
