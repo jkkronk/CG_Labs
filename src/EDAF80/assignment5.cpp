@@ -133,9 +133,9 @@ edaf80::Assignment5::run()
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
 	};
 
-	auto skybox_id = bonobo::loadTextureCubeMap("sea_sky/posx.jpg", "sea_sky/negx.jpg",
-		"sea_sky/posy.jpg", "sea_sky/negy.jpg",
-		"sea_sky/negz.jpg", "sea_sky/posz.jpg", true);
+	auto skybox_id = bonobo::loadTextureCubeMap("../../game/sea_sky/posx.jpg", "../../game/sea_sky/negx.jpg",
+		"../../game/sea_sky/posy.jpg", "../../game/sea_sky/negy.jpg",
+		"../../game/sea_sky/negz.jpg", "../../game/sea_sky/posz.jpg", true);
 	auto water_normal_id = bonobo::loadTexture2D("waves.png");
 	auto sphere_sky = parametric_shapes::createSphere(400, 400, 400);
 	auto plane = parametric_shapes::createQuadXZ(800, 800);
@@ -339,7 +339,7 @@ edaf80::Assignment5::run()
 			skybox.render(mCamera.GetWorldToClipMatrix());
 			airplane.render(mCamera.GetWorldToClipMatrix());
 			for (int i = 0; i < nbr_torus; i++) {
-				//torus_rings[i].render(mCamera.GetWorldToClipMatrix());
+				torus_rings[i].render(mCamera.GetWorldToClipMatrix());
 			}
 
 		}
