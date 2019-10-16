@@ -26,11 +26,47 @@ void Airplane::render(glm::mat4 worldToClipMatrix){
 glm::vec3 Airplane::get_position() {
 	return baseNode.get_transform().GetTranslation();
 }
+glm::vec3 Airplane::get_direction() {
+	return direction;
+}
 void Airplane::update(InputHandler inputHandler) {
-	if (inputHandler.GetKeycodeState(GLFW_KEY_W) & PRESSED) {
-		if(abs(velocity.z) < 2){
-			velocity.z -= 0.01;
+	if (inputHandler.GetKeycodeState(GLFW_KEY_SPACE) & PRESSED) {
+		if (abs(velocity) < 2) {
+			velocity += 0.01;
 		}
 	}
-	baseNode.get_transform().Translate(velocity);
+	else {
+		velocity -= 0.02;
+		if (velocity < 0) {
+			velocity = 0;
+		}
+	}
+	if (inputHandler.GetKeycodeState(GLFW_KEY_W) & PRESSED) {
+		angleY -= 0.005;
+		if (angleY < -0.5) {
+			angleY = -0.5;
+		}
+		direction.z = -glm::cos(glm::pi<double>() * angleY);
+		direction.y = glm::sin(glm::pi<double>() * angleY);
+	}
+	if (inputHandler.GetKeycodeState(GLFW_KEY_S) & PRESSED) {
+		angleY += 0.005;
+		if (angleY > 0.5) {
+			angleY = 0.5;
+		}
+		direction.z = -glm::cos(glm::pi<double>() * angleY);
+		direction.y = glm::sin(glm::pi<double>() * angleY);
+	}
+	if (inputHandler.GetKeycodeState(GLFW_KEY_A) & PRESSED) {
+		angleZ += 0.005;
+		if (angleZ > 0.5) {
+			angleZ = 0.5;
+		}
+		direction.z = -glm::cos(glm::pi<double>() * angleY);
+		direction.y = glm::sin(glm::pi<double>() * angleY);
+	}
+	baseNode.get_transform().SetRotateX(glm::pi<double>() * angleY);
+	baseNode.get_transform().RotateY(glm::pi<double>() * angleZ);
+
+	baseNode.get_transform().Translate(velocity*direction);
 }

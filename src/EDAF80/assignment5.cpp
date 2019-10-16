@@ -283,7 +283,7 @@ edaf80::Assignment5::run()
 		glfwPollEvents();
 		inputHandler.Advance();
 		airplane.update(inputHandler);
-		mCamera.mWorld.SetTranslate(airplane.get_position() + glm::vec3(0.0, 1.5, 6.0));
+		mCamera.mWorld.SetTranslate(airplane.get_position() + -6.0f * airplane.get_direction() + glm::vec3(0.0, 1.5, 0.0));
 		mCamera.mWorld.LookAt( airplane.get_position(), glm::vec3(0.0, 1.0, 0.0));
 		
 		//mCamera.Update(ddeltatime, inputHandler);
@@ -323,7 +323,7 @@ edaf80::Assignment5::run()
 			if (next_node > nbr_torus - 1) {
 				next_node = 0;
 			}
-			std::cout << next_node << std:endl;
+			std::cout << next_node << std::endl;
 			torus_rings[next_node].set_program(&phong_shader, phong_set_uniforms_green);
 		}
 
