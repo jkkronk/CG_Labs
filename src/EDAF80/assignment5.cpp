@@ -19,6 +19,7 @@
 #include <stack>
 #include <iostream>
 #include <ctime>
+#include <stdlib.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -172,8 +173,9 @@ edaf80::Assignment5::run()
 		}
 	}
 	
-	// Balloons
-	auto light_position = glm::vec3(-2.0f, 4.0f, 2.0f);
+	// TORUS
+	int const inner_radii = 6.0f;
+	auto light_position = glm::vec3(-2.0f, inner_radii+2, inner_radii);
 	auto const set_uniforms = [&light_position](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 	};
@@ -191,6 +193,34 @@ edaf80::Assignment5::run()
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
+	auto shape_torus = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f, 0.5f);
+
+	int const torus_per_part = 3;
+	int const nbr_torus = torus_per_part * (sizeof(interpts) / sizeof(glm::vec3)-2);
+	std::vector<Node> torus_rings(nbr_torus);
+
+	for (int i = 0; i < nbr_torus; i++) {
+		torus_rings[i].set_geometry(shape_torus);
+		torus_rings[i].set_program(&phong_shader, phong_set_uniforms); 
+		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		torus_rings[i].get_transform().RotateY(r*3); // start w different rotations
+	}
+
+
+	// set path for torus
+	float x = 0.0f;
+	for (int i = 0; i < nbr_torus; i++) { 
+		int idx = static_cast<int>(x);
+		int size = sizeof(interpts) / sizeof(glm::vec3);
+		glm::vec3 translation = interpolation::evalCatmullRom(interpts[idx], interpts[(idx) % size], interpts[(idx + 1) % size], interpts[(idx + 2) % size], catmull_rom_tension, x - idx);
+		x += (float)1/ (float)torus_per_part;
+		torus_rings[i].get_transform().SetTranslate(translation);
+	}
+
+	// GREEN TORUS
+	int next_node = 0;
+	int done_node = 0;
+
 	auto ambient_green = glm::vec3(0.1f, 0.95f, 0.1f);
 	auto diffuse_green = glm::vec3(0.2f, 1.0f, 0.2f);
 	auto const phong_set_uniforms_green = [&light_position, &camera_position, &ambient_green, &diffuse_green, &specular, &shininess](GLuint program) {
@@ -202,38 +232,11 @@ edaf80::Assignment5::run()
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
-	auto shape_torus = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f, 0.5f);
+	torus_rings[0].set_program(&phong_shader, phong_set_uniforms_green);
 
-	int const torus_per_part = 3;
-	int const nbr_torus = torus_per_part * (sizeof(interpts) / sizeof(glm::vec3)-2);
-	std::vector<Node> torus_rings(nbr_torus);
-
-	for (int i = 0; i < nbr_torus; i++) {
-		torus_rings[i].set_geometry(shape_torus);
-		torus_rings[i].set_program(&phong_shader, phong_set_uniforms);
-		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-
-		torus_rings[i].get_transform().RotateY(r*3);
-	}
-
-	float x = 0.0f;
-
-	for (int i = 0; i < nbr_torus; i++) {
-
-		int idx = static_cast<int>(x);
-		int size = sizeof(interpts) / sizeof(glm::vec3);
-
-		glm::vec3 translation = interpolation::evalCatmullRom(interpts[idx], interpts[(idx) % size], interpts[(idx + 1) % size], interpts[(idx + 2) % size], catmull_rom_tension, x - idx);
-		x += (float)1/ (float)torus_per_part;
-
-		//std::cout << translation << balloons_per_part << x << nbr_balloons << std::endl;
-		
-		torus_rings[i].get_transform().SetTranslate(translation);
-	}
-
-	// GREEN TORUS
-	int next_node = 0;
-	int done_node = true;
+	// MISC
+	int score = 0;
+	int plane_radii = 2.0f;
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -241,7 +244,6 @@ edaf80::Assignment5::run()
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
 	//glCullFace(GL_BACK);
-
 
 	f64 ddeltatime;
 	size_t fpsSamples = 0;
@@ -283,17 +285,31 @@ edaf80::Assignment5::run()
 		}
 
 		ImGui_ImplGlfwGL3_NewFrame();
-		
-		for (int i = 0; i < nbr_torus; i++) {
-			torus_rings[i].get_transform().RotateY(0.01f);
-		}
-			
-		if (done_node) {
-			torus_rings[next_node].set_program(&phong_shader, phong_set_uniforms_green);
 
-			done_node = false;
+		// ROTATE torus
+		for (int i = 0; i < nbr_torus; i++) {
+			torus_rings[i].get_transform().RotateY(0.01f); // maybe rotate so every torus allways is directed towards plane?
 		}
-		
+
+		// If plane is in goal torus --> make next torus green and set as goal
+		glm::vec3 distance_vec = torus_rings[next_node].get_transform().GetTranslation() - camera_position;
+		float distance = sqrt(dot(distance_vec, distance_vec));
+
+		if (distance < plane_radii + inner_radii) {
+			torus_rings[next_node].set_program(&phong_shader, phong_set_uniforms);
+
+			next_node += 1;
+			score += 1;
+			std::cout << score ;  // print score
+
+			if (next_node > nbr_torus - 1) {
+				next_node = 0;
+			}
+			std::cout << next_node;
+			torus_rings[next_node].set_program(&phong_shader, phong_set_uniforms_green);
+			
+		}
+
 		//
 		// Todo: If you need to handle inputs, you can do it here
 		//
@@ -347,3 +363,4 @@ int main()
 		LogError(e.what());
 	}
 }
+
