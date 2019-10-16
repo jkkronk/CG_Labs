@@ -306,8 +306,7 @@ edaf80::Assignment5::run()
 
 		// ROTATE torus
 		for (int i = 0; i < nbr_torus; i++) {
-			//v = mCamera.mWorld.GetFront();
-			torus_rings[i].get_transform().LookTowards(airplane.get_position(), glm::vec3(0.0, 1.0, 0.0));
+			torus_rings[i].get_transform().LookAt(airplane.get_position(), torus_rings[i].get_transform().GetTranslation()); // glm::vec3(0.0, 1.0, 0.0));
 			//torus_rings[i].get_transform().RotateY(0.01f); // maybe rotate so every torus allways is directed towards plane?
 		}
 
