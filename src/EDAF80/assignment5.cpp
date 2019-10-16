@@ -281,7 +281,11 @@ edaf80::Assignment5::run()
 
 		glfwPollEvents();
 		inputHandler.Advance();
-		mCamera.Update(ddeltatime, inputHandler);
+		airplane.update(inputHandler);
+		mCamera.mWorld.SetTranslate(airplane.get_position() + glm::vec3(0.0, 1.5, 6.0));
+		mCamera.mWorld.LookAt( airplane.get_position(), glm::vec3(0.0, 1.0, 0.0));
+		
+		//mCamera.Update(ddeltatime, inputHandler);
 		camera_position = mCamera.mWorld.GetTranslation();
 
 		if (inputHandler.GetKeycodeState(GLFW_KEY_F3) & JUST_RELEASED)
