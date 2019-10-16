@@ -186,8 +186,8 @@ edaf80::Assignment5::run()
 	}
 	
 	// TORUS
-	int const inner_radii = 6.0f;
-	auto light_position = glm::vec3(-2.0f, inner_radii+2, inner_radii);
+	
+	auto light_position = glm::vec3(-200.0f, 600.0f, 600.0f);
 	auto const set_uniforms = [&light_position](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 	};
@@ -206,8 +206,9 @@ edaf80::Assignment5::run()
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
-	auto shape_torus = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f, 0.5f);
-
+	
+	auto shape_torus = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f , 0.5f);
+	int const inner_radii = 0.5f;
 	int const torus_per_part = 3;
 	int const nbr_torus = torus_per_part * (sizeof(interpts) / sizeof(glm::vec3)-2);
 	std::vector<Node> torus_rings(nbr_torus);
