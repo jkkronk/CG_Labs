@@ -191,35 +191,49 @@ edaf80::Assignment5::run()
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
-	auto sphere_balloon = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f, 0.5f);
+	auto ambient_green = glm::vec3(0.1f, 0.95f, 0.1f);
+	auto diffuse_green = glm::vec3(0.2f, 1.0f, 0.2f);
+	auto const phong_set_uniforms_green = [&light_position, &camera_position, &ambient_green, &diffuse_green, &specular, &shininess](GLuint program) {
+		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
+		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+		glUniform3fv(glGetUniformLocation(program, "ambient"), 1, glm::value_ptr(ambient_green));
+		glUniform3fv(glGetUniformLocation(program, "diffuse"), 1, glm::value_ptr(diffuse_green));
+		glUniform3fv(glGetUniformLocation(program, "specular"), 1, glm::value_ptr(specular));
+		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
+	};
 
-	int const balloons_per_part = 4;
-	int const nbr_balloons = balloons_per_part * (sizeof(interpts) / sizeof(glm::vec3)-2);
-	std::vector<Node> balloons(nbr_balloons);
+	auto shape_torus = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f, 0.5f);
 
-	for (int i = 0; i < nbr_balloons; i++) {
-		balloons[i].set_geometry(sphere_balloon);
-		balloons[i].set_program(&phong_shader, phong_set_uniforms);
+	int const torus_per_part = 3;
+	int const nbr_torus = torus_per_part * (sizeof(interpts) / sizeof(glm::vec3)-2);
+	std::vector<Node> torus_rings(nbr_torus);
+
+	for (int i = 0; i < nbr_torus; i++) {
+		torus_rings[i].set_geometry(shape_torus);
+		torus_rings[i].set_program(&phong_shader, phong_set_uniforms);
 		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
-		balloons[i].get_transform().RotateY(r*3);
+		torus_rings[i].get_transform().RotateY(r*3);
 	}
 
 	float x = 0.0f;
 
-	for (int i = 0; i < nbr_balloons; i++) {
+	for (int i = 0; i < nbr_torus; i++) {
 
 		int idx = static_cast<int>(x);
 		int size = sizeof(interpts) / sizeof(glm::vec3);
 
 		glm::vec3 translation = interpolation::evalCatmullRom(interpts[idx], interpts[(idx) % size], interpts[(idx + 1) % size], interpts[(idx + 2) % size], catmull_rom_tension, x - idx);
-		x += (float)1/ (float)balloons_per_part;
+		x += (float)1/ (float)torus_per_part;
 
 		//std::cout << translation << balloons_per_part << x << nbr_balloons << std::endl;
 		
-		balloons[i].get_transform().SetTranslate(translation);
+		torus_rings[i].get_transform().SetTranslate(translation);
 	}
-	
+
+	// GREEN TORUS
+	int next_node = 0;
+	int done_node = true;
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -270,14 +284,19 @@ edaf80::Assignment5::run()
 
 		ImGui_ImplGlfwGL3_NewFrame();
 		
-		for (int i = 0; i < nbr_balloons; i++) {
-			balloons[i].get_transform().RotateY(0.01f);
+		for (int i = 0; i < nbr_torus; i++) {
+			torus_rings[i].get_transform().RotateY(0.01f);
+		}
+			
+		if (done_node) {
+			torus_rings[next_node].set_program(&phong_shader, phong_set_uniforms_green);
+
+			done_node = false;
 		}
 		
 		//
 		// Todo: If you need to handle inputs, you can do it here
 		//
-
 
 		int framebuffer_width, framebuffer_height;
 		glfwGetFramebufferSize(window, &framebuffer_width, &framebuffer_height);
@@ -290,8 +309,8 @@ edaf80::Assignment5::run()
 			water.render(mCamera.GetWorldToClipMatrix());
 			skybox.render(mCamera.GetWorldToClipMatrix());
 
-			for (int i = 0; i < nbr_balloons; i++) {
-				balloons[i].render(mCamera.GetWorldToClipMatrix());
+			for (int i = 0; i < nbr_torus; i++) {
+				torus_rings[i].render(mCamera.GetWorldToClipMatrix());
 			}
 
 		}
