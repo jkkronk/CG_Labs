@@ -153,20 +153,18 @@ edaf80::Assignment5::run()
 	skybox.add_texture("skybox", skybox_id, GL_TEXTURE_CUBE_MAP);
 
 	
-	Airplane airplane = Airplane(&default_shader);
-
-
+	
 	//Path
 	float catmull_rom_tension = 0.8f;
 	
 	glm::vec3 interpts[7] = {
-								glm::vec3(0.0f,0.0f,0.0f),
-								glm::vec3(0.0f,0.0f,0.0f),
-								glm::vec3(0.0f,0.0f,0.0f),
-								glm::vec3(0.0f,0.0f,0.0f),
-								glm::vec3(0.0f,0.0f,0.0f),
-								glm::vec3(0.0f,0.0f,0.0f),
-								glm::vec3(0.0f,0.0f,0.0f)
+		glm::vec3(0.0f,0.0f,0.0f),
+		glm::vec3(0.0f,0.0f,0.0f),
+		glm::vec3(0.0f,0.0f,0.0f),
+		glm::vec3(0.0f,0.0f,0.0f),
+		glm::vec3(0.0f,0.0f,0.0f),
+		glm::vec3(0.0f,0.0f,0.0f),
+		glm::vec3(0.0f,0.0f,0.0f)
 	};
 	
 	int x_next = 0.0f;
@@ -187,14 +185,14 @@ edaf80::Assignment5::run()
 	
 	// TORUS
 	
-	auto light_position = glm::vec3(-200.0f, 600.0f, 600.0f);
+	auto light_position = glm::vec3(3.757f,  116.295f,  365.940f);
 	auto const set_uniforms = [&light_position](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 	};
 	
-	auto ambient = glm::vec3(0.95f, 0.1f, 0.1f);
+	auto ambient = glm::vec3(0.45f, 0.1f, 0.1f);
 	auto diffuse = glm::vec3(1.0f, 0.2f, 0.2f);
-	auto specular = glm::vec3(1.0f, 1.0f, 1.0f);
+	auto specular = glm::vec3(0.4f, 0.4f, 0.4f);
 	auto shininess = 0.99f;
 	
 	auto const phong_set_uniforms = [&light_position, &camera_position, &ambient, &diffuse, &specular, &shininess](GLuint program) {
@@ -206,9 +204,9 @@ edaf80::Assignment5::run()
 		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
 	};
 
+	float const inner_radii = 5.0f;
+	auto shape_torus = parametric_shapes::createTorus(60.0f, 60.0f, inner_radii , 0.5f);
 	
-	auto shape_torus = parametric_shapes::createTorus(20.0f, 20.0f, 2.0f , 0.5f);
-	int const inner_radii = 0.5f;
 	int const torus_per_part = 3;
 	int const nbr_torus = torus_per_part * (sizeof(interpts) / sizeof(glm::vec3)-1);
 	std::vector<Node> torus_rings(nbr_torus);
@@ -219,6 +217,8 @@ edaf80::Assignment5::run()
 		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		//torus_rings[i].get_transform().RotateY(r*3); // start w different rotations
 	}
+	Airplane airplane = Airplane(&phong_shader, light_position, camera_position);
+
 
 
 	// set path for torus
@@ -235,7 +235,7 @@ edaf80::Assignment5::run()
 	int next_node = 0;
 	int done_node = 0;
 
-	auto ambient_green = glm::vec3(0.1f, 0.95f, 0.1f);
+	auto ambient_green = glm::vec3(0.1f, 0.45f, 0.1f);
 	auto diffuse_green = glm::vec3(0.2f, 1.0f, 0.2f);
 	auto const phong_set_uniforms_green = [&light_position, &camera_position, &ambient_green, &diffuse_green, &specular, &shininess](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
@@ -282,31 +282,16 @@ edaf80::Assignment5::run()
 
 		glfwPollEvents();
 		inputHandler.Advance();
-		airplane.update(inputHandler);
-		mCamera.mWorld.SetTranslate(airplane.get_position() + glm::vec3(0.0, 1.5, 6.0));
+		airplane.update(inputHandler, ddeltatime/1000.0f);
+		glm::vec3 direction = airplane.get_direction();
+		mCamera.mWorld.SetTranslate(airplane.get_position() - 6.0f * airplane.get_direction());
 		mCamera.mWorld.LookAt(airplane.get_position(), glm::vec3(0.0, 1.0, 0.0));
 		
 		//mCamera.Update(ddeltatime, inputHandler);
 		camera_position = mCamera.mWorld.GetTranslation();
 
-		if (inputHandler.GetKeycodeState(GLFW_KEY_F3) & JUST_RELEASED)
-			show_logs = !show_logs;
-		if (inputHandler.GetKeycodeState(GLFW_KEY_F2) & JUST_RELEASED)
-			show_gui = !show_gui;
-		if (inputHandler.GetKeycodeState(GLFW_KEY_R) & JUST_PRESSED) {
-			shader_reload_failed = !program_manager.ReloadAllPrograms();
-			if (shader_reload_failed)
-				tinyfd_notifyPopup("Shader Program Reload Error",
-					"An error occurred while reloading shader programs; see the logs for details.\n"
-					"Rendering is suspended until the issue is solved. Once fixed, just reload the shaders again.",
-					"error");
-		}
-
-		ImGui_ImplGlfwGL3_NewFrame();
-
-		// ROTATE torus
 		for (int i = 0; i < nbr_torus; i++) {
-			torus_rings[i].get_transform().LookAt(airplane.get_position(), torus_rings[i].get_transform().GetTranslation()); // glm::vec3(0.0, 1.0, 0.0));
+			torus_rings[i].get_transform().LookAt(airplane.get_position(), glm::vec3(0.0,1.0,0.0)); // glm::vec3(0.0, 1.0, 0.0));
 			//torus_rings[i].get_transform().RotateY(0.01f); // maybe rotate so every torus allways is directed towards plane?
 		}
 
@@ -328,6 +313,23 @@ edaf80::Assignment5::run()
 			torus_rings[next_node].set_program(&phong_shader, phong_set_uniforms_green);
 		}
 
+		if (inputHandler.GetKeycodeState(GLFW_KEY_F3) & JUST_RELEASED)
+			show_logs = !show_logs;
+		if (inputHandler.GetKeycodeState(GLFW_KEY_F2) & JUST_RELEASED)
+			show_gui = !show_gui;
+		if (inputHandler.GetKeycodeState(GLFW_KEY_R) & JUST_PRESSED) {
+			shader_reload_failed = !program_manager.ReloadAllPrograms();
+			if (shader_reload_failed)
+				tinyfd_notifyPopup("Shader Program Reload Error",
+					"An error occurred while reloading shader programs; see the logs for details.\n"
+					"Rendering is suspended until the issue is solved. Once fixed, just reload the shaders again.",
+					"error");
+		}
+
+		ImGui_ImplGlfwGL3_NewFrame();
+
+		// ROTATE torus
+		
 		/*
 		if (camera_position[1] < -8) {
 			mCamera.mWorld.Translate( glm::vec3(camera_position[0], -8, camera_position[2]));
@@ -345,7 +347,7 @@ edaf80::Assignment5::run()
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		if (!shader_reload_failed) {
-			water.render(mCamera.GetWorldToClipMatrix());
+			//water.render(mCamera.GetWorldToClipMatrix());
 			skybox.render(mCamera.GetWorldToClipMatrix());
 			airplane.render(mCamera.GetWorldToClipMatrix());
 			for (int i = 0; i < nbr_torus; i++) {
