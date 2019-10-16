@@ -217,7 +217,7 @@ edaf80::Assignment5::run()
 		torus_rings[i].set_geometry(shape_torus);
 		torus_rings[i].set_program(&phong_shader, phong_set_uniforms); 
 		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-		torus_rings[i].get_transform().RotateY(r*3); // start w different rotations
+		//torus_rings[i].get_transform().RotateY(r*3); // start w different rotations
 	}
 
 
@@ -306,7 +306,9 @@ edaf80::Assignment5::run()
 
 		// ROTATE torus
 		for (int i = 0; i < nbr_torus; i++) {
-			torus_rings[i].get_transform().RotateY(0.01f); // maybe rotate so every torus allways is directed towards plane?
+			//v = mCamera.mWorld.GetFront();
+			torus_rings[i].get_transform().LookTowards(airplane.get_position(), glm::vec3(0.0, 1.0, 0.0));
+			//torus_rings[i].get_transform().RotateY(0.01f); // maybe rotate so every torus allways is directed towards plane?
 		}
 
 		// If plane is in goal torus --> make next torus green and set as goal
@@ -318,8 +320,9 @@ edaf80::Assignment5::run()
 
 			next_node += 1;
 			score += 1;
-			std::cout << score << std::endl;  // print score
-
+			//std::cout << score << std::endl;  // print score
+			Log("SCORE:");
+			Log(std::to_string(score).c_str());
 			if (next_node > nbr_torus - 1) {
 				next_node = 0;
 			}
