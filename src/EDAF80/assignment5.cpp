@@ -1,7 +1,7 @@
 #include "assignment5.hpp"
 #include "interpolation.hpp"
 #include "parametric_shapes.hpp"
-
+#include "airplane.hpp"
 #include "config.hpp"
 #include "core/Bonobo.h"
 #include "core/FPSCamera.h"
@@ -64,7 +64,15 @@ edaf80::Assignment5::run()
 		LogError("Failed to load fallback shader");
 		return;
 	}
-
+	GLuint default_shader = 0u;
+	program_manager.CreateAndRegisterProgram("default",
+		{ { ShaderType::vertex, "EDAF80/default.vert" },
+		  { ShaderType::fragment, "EDAF80/default.frag" } },
+		default_shader);
+	if (default_shader == 0u) {
+		LogError("Failed to load default shader");
+		return;
+	}
 	//
 	// Todo: Insert the creation of other shader programs.
 	//       (Check how it was done in assignment 3.)
@@ -144,6 +152,10 @@ edaf80::Assignment5::run()
 	skybox.set_program(&skybox_shader, [](GLuint /*program*/) {});
 	skybox.add_texture("skybox", skybox_id, GL_TEXTURE_CUBE_MAP);
 
+	
+	Airplane airplane = Airplane(&default_shader);
+
+
 	//Path
 	float catmull_rom_tension = 0.8f;
 	
@@ -179,11 +191,12 @@ edaf80::Assignment5::run()
 	auto const set_uniforms = [&light_position](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 	};
-
+	
 	auto ambient = glm::vec3(0.95f, 0.1f, 0.1f);
 	auto diffuse = glm::vec3(1.0f, 0.2f, 0.2f);
 	auto specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	auto shininess = 1.1f;
+	auto shininess = 0.5f;
+	
 	auto const phong_set_uniforms = [&light_position, &camera_position, &ambient, &diffuse, &specular, &shininess](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
@@ -324,9 +337,9 @@ edaf80::Assignment5::run()
 		if (!shader_reload_failed) {
 			water.render(mCamera.GetWorldToClipMatrix());
 			skybox.render(mCamera.GetWorldToClipMatrix());
-
+			airplane.render(mCamera.GetWorldToClipMatrix());
 			for (int i = 0; i < nbr_torus; i++) {
-				torus_rings[i].render(mCamera.GetWorldToClipMatrix());
+				//torus_rings[i].render(mCamera.GetWorldToClipMatrix());
 			}
 
 		}

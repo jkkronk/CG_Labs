@@ -74,6 +74,8 @@ set (
 
 	"assignment5.cpp"
 	"assignment5.hpp"
+	"airplane.cpp"
+	"airplane.hpp"
 )
 
 source_group (
