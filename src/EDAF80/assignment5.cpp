@@ -20,7 +20,7 @@
 #include <iostream>
 #include <ctime>
 #include <stdlib.h>
-
+#include "PerlinNoise.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -142,7 +142,7 @@ edaf80::Assignment5::run()
 	auto water = Node();
 	water.set_geometry(plane);
 	water.set_program(&water_shader, water_set_uniforms);
-	water.get_transform().SetTranslate(glm::vec3(-400.0f, -10.0f, -400.0f));
+	water.get_transform().SetTranslate(glm::vec3(-200.0f, 0.0f, -200.0f));
 	water.add_texture("skybox", skybox_id, GL_TEXTURE_CUBE_MAP);
 	water.add_texture("normal_map", water_normal_id, GL_TEXTURE_2D);
 
@@ -168,7 +168,7 @@ edaf80::Assignment5::run()
 	};
 	
 	int x_next = 0.0f;
-	int y_next = 0.0f;
+	int y_next = 10.0f;
 	int z_next = -40.0f;
 
 	for (int i = 0; i < (sizeof(interpts) / sizeof(glm::vec3)-1); i++) {
@@ -219,8 +219,21 @@ edaf80::Assignment5::run()
 	}
 	Airplane airplane = Airplane(&phong_shader, light_position, camera_position);
 
+	siv::PerlinNoise perlin;
+	double height_map[512][512];
+	double frequency = 0.5f;
+	for (int y = 0; y < 512; ++y)
+	{
+		for (int x = 0; x < 512; ++x)
+		{	
+			height_map[y][x] = perlin.octaveNoise0_1(static_cast<float>(x)/(512.0f*frequency),static_cast<float>(y)/(512.0*frequency), 8);
+		}
+	}
 
-
+	auto shape_terrain = parametric_shapes::createQuadXZFromHeigthMap(500,500,height_map, 1);
+	Node terrain;
+	terrain.set_geometry(shape_terrain);
+	terrain.set_program(&fallback_shader,  [](GLuint /*program*/) {});
 	// set path for torus
 	float x = 0.0f;
 	for (int i = 0; i < nbr_torus; i++) { 
@@ -347,12 +360,13 @@ edaf80::Assignment5::run()
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		if (!shader_reload_failed) {
-			//water.render(mCamera.GetWorldToClipMatrix());
+			water.render(mCamera.GetWorldToClipMatrix());
 			skybox.render(mCamera.GetWorldToClipMatrix());
 			airplane.render(mCamera.GetWorldToClipMatrix());
 			for (int i = 0; i < nbr_torus; i++) {
 				torus_rings[i].render(mCamera.GetWorldToClipMatrix());
 			}
+			terrain.render(mCamera.GetWorldToClipMatrix());
 
 		}
 

@@ -23,7 +23,7 @@ namespace parametric_shapes
 	//! @return wrapper around OpenGL objects' name containing the geometry
 	//!         data
 	bonobo::mesh_data createSphere(unsigned int const res_theta, unsigned int const res_phi, float const radius);
-
+	bonobo::mesh_data createQuadXZFromHeigthMap(unsigned int size, unsigned int res, double (&height_map)[512][512], double amplitude);
 	//! \brief Create a torus for some tesselation level and make it
 	//!        available to OpenGL.
 	//!
