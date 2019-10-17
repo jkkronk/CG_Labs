@@ -76,6 +76,7 @@ set (
 	"assignment5.hpp"
 	"airplane.cpp"
 	"airplane.hpp"
+	"PerlinNoise.hpp"
 )
 
 source_group (

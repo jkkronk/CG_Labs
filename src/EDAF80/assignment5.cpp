@@ -28,11 +28,10 @@
 
 
 
-
 edaf80::Assignment5::Assignment5(WindowManager& windowManager) :
 	mCamera(0.5f* glm::half_pi<float>(),
 		static_cast<float>(config::resolution_x) / static_cast<float>(config::resolution_y),
-		0.01f, 1000.0f),
+		0.1f, 1000.0f),
 	inputHandler(), mWindowManager(windowManager), window(nullptr)
 {
 	WindowManager::WindowDatum window_datum{ inputHandler, mCamera, config::resolution_x, config::resolution_y, 0, 0, 0, 0 };
@@ -103,6 +102,14 @@ edaf80::Assignment5::run()
 	if (phong_shader == 0u)
 		LogError("Failed to load phong shader");
 
+	GLuint diffuse_shader = 0u;
+	program_manager.CreateAndRegisterProgram("Diffuse",
+		{ { ShaderType::vertex, "EDAF80/diffuse.vert" },
+		  { ShaderType::fragment, "EDAF80/diffuse.frag" } },
+		diffuse_shader);
+	if (diffuse_shader == 0u)
+		LogError("Failed to load phong shader");
+
 	//
 	// Todo: Load your geometry
 	//
@@ -133,16 +140,19 @@ edaf80::Assignment5::run()
 		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
 	};
 
-	auto skybox_id = bonobo::loadTextureCubeMap("../../game/sea_sky/posx.jpg", "../../game/sea_sky/negx.jpg",
+	/*auto skybox_id = bonobo::loadTextureCubeMap("../../game/sea_sky/posx.jpg", "../../game/sea_sky/negx.jpg",
 		"../../game/sea_sky/posy.jpg", "../../game/sea_sky/negy.jpg",
-		"../../game/sea_sky/negz.jpg", "../../game/sea_sky/posz.jpg", true);
+		"../../game/sea_sky/negz.jpg", "../../game/sea_sky/posz.jpg", true);*/
+	auto skybox_id = bonobo::loadTextureCubeMap("cloudyhills/posx.png", "cloudyhills/negx.png",
+		"cloudyhills/posy.png", "cloudyhills/negy.png",
+		"cloudyhills/posz.png", "cloudyhills/negz.png", true);
 	auto water_normal_id = bonobo::loadTexture2D("waves.png");
-	auto sphere_sky = parametric_shapes::createSphere(400, 400, 400);
-	auto plane = parametric_shapes::createQuadXZ(800, 800);
+	auto sphere_sky = parametric_shapes::createSphere(360, 360, 500);
+	auto plane = parametric_shapes::createQuadXZ(1000, 500);
 	auto water = Node();
 	water.set_geometry(plane);
 	water.set_program(&water_shader, water_set_uniforms);
-	water.get_transform().SetTranslate(glm::vec3(-200.0f, 0.0f, -200.0f));
+	water.get_transform().SetTranslate(glm::vec3(-500.0f, 0.0f, -500.0f));
 	water.add_texture("skybox", skybox_id, GL_TEXTURE_CUBE_MAP);
 	water.add_texture("normal_map", water_normal_id, GL_TEXTURE_2D);
 
@@ -156,7 +166,10 @@ edaf80::Assignment5::run()
 	
 	//Path
 	float catmull_rom_tension = 0.8f;
-	
+	float x_next = 0.0f;
+	float y_next = 150.0f;
+	float z_next = -40.0f;
+
 	glm::vec3 interpts[7] = {
 		glm::vec3(0.0f,0.0f,0.0f),
 		glm::vec3(0.0f,0.0f,0.0f),
@@ -164,20 +177,25 @@ edaf80::Assignment5::run()
 		glm::vec3(0.0f,0.0f,0.0f),
 		glm::vec3(0.0f,0.0f,0.0f),
 		glm::vec3(0.0f,0.0f,0.0f),
-		glm::vec3(0.0f,0.0f,0.0f)
+		glm::vec3(x_next,y_next,z_next)
 	};
-	
-	int x_next = 0.0f;
-	int y_next = 10.0f;
-	int z_next = -40.0f;
 
+	float const min_dist = 150;
+	float dist;
+
+	std::srand(GetTimeMilliseconds());
 	for (int i = 0; i < (sizeof(interpts) / sizeof(glm::vec3)-1); i++) {
 		interpts[i] = glm::vec3(x_next, y_next, z_next);
-
-		x_next += -75 + (std::rand() % (150 + 75 + 1));
-		y_next += -25 + (std::rand() % (50 + 25 + 1));
-		z_next += -75 + (std::rand() % (150 + 75 + 1));
-
+		dist = 0;
+		while (dist < min_dist) {
+			float x_prev = x_next;
+			float y_prev = y_next;
+			float z_prev = z_next;
+			x_next += -150 + (std::rand() % (300 + 1));
+			y_next += -10 + (std::rand() % (20 + 1));
+			z_next += -150 + (std::rand() % (300 + 1));
+			dist = abs(x_prev - x_next) + abs(z_prev - z_next) + abs(y_prev - y_next);
+		}
 		if (y_next < 5) {
 			y_next = 5.0f;
 		}
@@ -185,7 +203,9 @@ edaf80::Assignment5::run()
 	
 	// TORUS
 	
-	auto light_position = glm::vec3(3.757f,  116.295f,  365.940f);
+	//auto light_position = glm::vec3(30.757f,  1160.295f,  3650.940f);
+	auto light_position = glm::vec3(0.0,500.0 ,-200.0);
+
 	auto const set_uniforms = [&light_position](GLuint program) {
 		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
 	};
@@ -217,23 +237,32 @@ edaf80::Assignment5::run()
 		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		//torus_rings[i].get_transform().RotateY(r*3); // start w different rotations
 	}
-	Airplane airplane = Airplane(&phong_shader, light_position, camera_position);
+	Airplane airplane = Airplane(&default_shader, light_position, camera_position);
 
-	siv::PerlinNoise perlin;
-	double height_map[512][512];
-	double frequency = 0.5f;
-	for (int y = 0; y < 512; ++y)
-	{
-		for (int x = 0; x < 512; ++x)
-		{	
-			height_map[y][x] = perlin.octaveNoise0_1(static_cast<float>(x)/(512.0f*frequency),static_cast<float>(y)/(512.0*frequency), 8);
-		}
-	}
+	siv::PerlinNoise perlin(GetTimeMilliseconds());
+	//double height_map[512][512];
+	//double frequency = 0.5f;
+	//for (int y = 0; y < 512; ++y)
+	//{
+	//	for (int x = 0; x < 512; ++x)
+	//	{	
+			//height_map[y][x] = perlin.octaveNoise0_1(static_cast<float>(x)/(512.0f*frequency),static_cast<float>(y)/(512.0*frequency), 8);
+	//	}
+	//}
+	auto island_diffuse_id = bonobo::loadTexture2D("island.png");
+	auto ambient_island = glm::vec3(0.1f, 0.1f, 0.1f);
 
-	auto shape_terrain = parametric_shapes::createQuadXZFromHeigthMap(500,500,height_map, 1);
+	auto const island_uniforms = [&light_position, &camera_position, &ambient_island](GLuint program) {
+		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
+		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
+		glUniform3fv(glGetUniformLocation(program, "ambient"), 1, glm::value_ptr(ambient_island));
+	};
+	auto shape_terrain = parametric_shapes::createQuadXZFromHeigthMap(1000,500,perlin, 100.f, 0.3f);
 	Node terrain;
 	terrain.set_geometry(shape_terrain);
-	terrain.set_program(&fallback_shader,  [](GLuint /*program*/) {});
+	terrain.set_program(&diffuse_shader,  island_uniforms);
+	terrain.add_texture("diffuse_texture", island_diffuse_id, GL_TEXTURE_2D);
+	terrain.get_transform().Translate(glm::vec3(-500.0f, 0.0, -500.0f));
 	// set path for torus
 	float x = 0.0f;
 	for (int i = 0; i < nbr_torus; i++) { 

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include "PerlinNoise.hpp"
 
 bonobo::mesh_data
 parametric_shapes::createQuad(unsigned int width, unsigned int height,unsigned int res_height,unsigned int res_width)
@@ -209,7 +210,7 @@ parametric_shapes::createQuadXZ(unsigned int size, unsigned int res)
 	return data;
 }
 bonobo::mesh_data
-parametric_shapes::createQuadXZFromHeigthMap(unsigned int size, unsigned int res,  double (&height_map)[512][512], double amplitude)
+parametric_shapes::createQuadXZFromHeigthMap(unsigned int size, unsigned int res,  siv::PerlinNoise perlin, double amplitude, double frequency)
 {
 	//! \todo Fill in the blanks
 	/*auto const vertices = std::array<glm::vec3, 4>{
@@ -231,11 +232,18 @@ parametric_shapes::createQuadXZFromHeigthMap(unsigned int size, unsigned int res
 	int index = 0;
 	for (int y = 0; y < res; ++y) {
 		for (int x = 0; x < res; ++x) {
-			normals[index] = glm::vec3(0, 0, 1);
+			float height = perlin.octaveNoise0_1(static_cast<float>(x) / (res * frequency), static_cast<float>(y) / (res * frequency), 8);
+			float height1 = perlin.octaveNoise0_1(static_cast<float>(x+1) / (res * frequency), static_cast<float>(y) / (res * frequency), 8);
+			float height2 = perlin.octaveNoise0_1(static_cast<float>(x) / (res * frequency), static_cast<float>(y+1) / (res * frequency), 8);
+
+			glm::vec3 Tx = glm::vec3(1.0, height1 - height, 0.0);
+			glm::vec3 Tz = glm::vec3(0.0, height2 - height, 1.0);
+
+			normals[index] = glm::cross(Tz, Tx);
 			tangents[index] = glm::vec3(1, 0, 0);
 			binormals[index] = glm::vec3(0, 1, 0);
-			vertices[index] = glm::vec3(size_step * x, height_map[y][x]*amplitude, size_step * y);
-			texcoords[index] = glm::vec3(static_cast<float>(x)/(static_cast<float>(res) - 1.0f), static_cast<float>(y)/(static_cast<float>(res) - 1.0f), 0.0);
+			vertices[index] = glm::vec3(size_step * x, (height-0.5) * amplitude ,  size_step * y);
+			texcoords[index] = glm::vec3(height, 0.0, 0.0);
 			index++;
 		}
 	}

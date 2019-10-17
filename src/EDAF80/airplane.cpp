@@ -23,7 +23,7 @@ Airplane::Airplane(GLuint* shader, glm::vec3& light_position, glm::vec3& camera_
 	});
 	baseNode.add_texture("diffuse_texture", airplane_texture, GL_TEXTURE_2D);
 	//baseNode.get_transform().RotateY(glm::pi<float>());
-	baseNode.get_transform().SetTranslate(glm::vec3(0.0,10.0,0.0));
+	baseNode.get_transform().SetTranslate(glm::vec3(0.0,150.0,0.0));
 	for(size_t i = 1 ; i < objects.size(); i++){
 		printf("%d\n", i);
 	}
@@ -85,8 +85,7 @@ void Airplane::update(InputHandler inputHandler, float delta) {
 	 		angleZ = 0.5;
 	 	}
 	 	angleZchanged = true;
-	 	//direction.z = -glm::cos(glm::pi<double>() * angleY);
-	 	//direction.y = glm::sin(glm::pi<double>() * angleY);
+	 	
 	}
 	if(!angleZchanged){
 		if(angleZ < 0){
